@@ -1,0 +1,8 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.lhd.alarm" >
+    <application>
+        <receiver android:name=".AlarmModuleReceiver"/>
+        <service android:name=".NotificationService"
+            android:permission="android.permission.FOREGROUND_SERVICE"/>
+    </application>
+</manifest>
