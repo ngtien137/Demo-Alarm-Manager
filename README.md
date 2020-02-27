@@ -1,1 +1,16 @@
 # Demo-Alarm-Manager
+## Các bước chạy alarm:
+  - B1: Tạo 1 broadcastReceiver và nhận sự kiện khi đến thời điểm mà Alarm Manager hẹn giờ và tạo service để hiển thị thông báo. Nhớ khai báo cả 2 bên trong Manifest và thêm quyền FOREGROUND_SERVICE. Khi đến thời điểm báo thức, BroadcastReceiver sẽ start service kia lên để hiển thị thông báo.
+  - B2: Tạo alarm manager thông qua AlarmModule với hàm createAlarm
+  - B3: Sau khi alarm manager được start, 1 cái hẹn giờ sẽ được chạy ngầm và khi đến thời điểm hẹn giờ nó sẽ nhảy vào broadcast và hiển thị thông báo lên.
+## Giải thích
+### Alarm Module
+- Để chạy 1 alarm manager. Ta sẽ sử dụng các hàm như alarmManager.set, setExact, setRepeating, setInexactRepeating, setAlarmClock,...
+- Với setExact,set,setRepeating, setInexactRepeating ta chỉ cần 1 cái pendingIntent (Trong demo pending intent này là operationIntent) để chạy alarm manager. PendingIntent có thể tồn tại kể cả khi tắt app. Để khởi tạo intent này ta cần 1 cái intent bình thường và đây sẽ chính là cái intent được sử dụng để chứa dữ liệu và được chạy lên khi đến giờ. Ở trong demo intent này là intentReceiver hướng tới AlarmModuleReceiver. Vì vậy khi đến giờ thì AlarmModuleReceiver sẽ được chạy lên.
+- Ngoài ra trong demo còn có 1 biến pending intent nữa là showIntent. Pending Intent này để chạy hàm setAlarmClock của Alarm Manager. Hàm set Alarm Clock này có độ chính xác lớn hơn các intent khác. Tuy nhiên nó cần 1 object truyền vào là alarmClockInfo với 1 cái showIntent. Việc sử dụng Alarm Clock này chính là sử dụng alarm mặc định có trong máy, khi sử dụng sẽ xuất hiện biểu tượng như báo thức ở thanh status bar, showIntent phục vụ cho việc tương tác với biểu tượng đó. Về cơ bản là ta không cần quan tâm đến nó nên cứ tạo nó với intent mainActivity là được.
+- Với mỗi một cái pendingIntent sẽ có 1 request code và 1 biến cờ (Ở đây dùng là FLAG_UPDATE_CURRENT). Request code này được coi như 1 id sẽ phục vụ cho việc lấy ra cũng như hủy được cái alarm manager đó. Ví dụ trước đó ta đã start 1 cái alarm manager với request code = 10, thì khi ta start nó lần nữa, việc hủy, cập nhật hay tạo mới một cái alarm manager sẽ phụ thuộc vào cái cờ ở đằng sau. Ở đây dùng FLAG_UPDATE_CURRENT tức là cập nhật lại cái alarm hiện tại.
+### AlarmModuleReceiver
+- Khi đến thời điểm báo thức, AlarmModuleReceiver sẽ nhận được với dữ liệu là intentReceiver truyền sang. Ở đây ta có thể check điều kiện để hiển thị thông báo hay không, sau đó ta sẽ tạo ra một intent để chạy NotificationService nếu muốn hiển thị thông báo. Tùy vào phiên bản android mà ta sẽ startForegroundService hay startServices cái intent đó. Dữ liệu của intentReceiver sẽ được truyền sang intent mới này nếu cần thiết.
+### NotificationService
+- Khi service được chạy lên nó sẽ nhảy vào hàm onStartCommand, ta sẽ xử lý dữ liệu intent nhận được từ AlarmModuleReceiver ở đây. Sau đó sử dụng những dữ liệu đó để tạo ra 1 cái notification. Ở trong demo sẽ có một lớp xử lý việc tạo đấy là NotiBuilder. Notification trên android 8 trở lên cần 1 cái biến string channelId để định nghĩa ra nó cho nên ta phải truyền vào 1 cái channelId, nếu chỉ để hiển thị thông báo thì nó là gì cũng được.
+- Sau khi tạo xong thông báo thì việc ta cần làm cuối cùng là hiển thị nó ra thông qua hàm startForeground() và truyền vào là 1 cái id  với 1 cái notification vừa tạo ở trên.
